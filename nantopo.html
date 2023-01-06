@@ -1,0 +1,914 @@
+﻿<!DOCTYPE html>
+<html lang="ja" class="h-100">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here" />
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.0-alpha1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.0/dist/leaflet.js"></script>
+    <script src="./dist/leaflet.browser.print.min.js"></script>
+    <script src="./src/leaflet.browser.print.sizes.js"></script>
+    <script src="./sankozissekihyou.js"></script>
+    <script src="./othermarker.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="./lib/getPostData.js"></script>
+    <script src="./lib/getGeoData.js"></script>
+    <script src="./lib/l.ellipse.js"></script>
+
+    <!--現在地表示-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.73.0/dist/L.Control.Locate.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.73.0/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+
+    <!--サジェスト風検索窓-->
+    <script src="./suggest.js"></script>
+    <script src="./yamakensaku.js"></script>
+
+    <title>SideBar menu</title>
+<style type="text/css">
+/* サジェスト風検索窓用 */
+        #suggest {
+          position: absolute;
+          background-color: #FFFFFF;
+          border: 1px solid #CCCCFF;
+          width: 402px;
+          height: 160px;
+          overflow: auto;
+        }
+        #suggest div {
+          padding: 1px;
+          display: block;
+          width: 400px;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+        #suggest div.select{
+          color: #FFFFFF;
+          background-color: #3366FF;
+        }
+        #suggest div.over{
+          background-color: #99CCFF;
+        }
+        #suggest strong{
+          font-weight: bold;
+        }
+/* サジェスト風検索窓用 */
+</style>
+<script>
+    // wondowのonloadイベントでSuggestを生成
+    // (listは、list.js内で定義している)
+    var start = function(){new Suggest.Local("text", "suggest", yamakensaku, {dispMax: 100, highlight: true});};
+    window.addEventListener ?
+      window.addEventListener('load', start, false) :
+      window.attachEvent('onload', start);
+
+window.onload = () => {
+    init();
+}
+
+var otherID = [
+{name:'その他',id:0},
+{name:'山頂',id:1},
+{name:'トイレ',id:2},
+{name:'展望ポイント',id:4},
+{name:'分岐',id:8},
+{name:'山小屋',id:16},
+{name:'水場',id:32},
+{name:'食事',id:64},
+{name:'お風呂',id:128},
+{name:'テント場',id:256},
+{name:'バス停',id:512},
+{name:'駅',id:1024},
+{name:'危険箇所',id:2048},
+{name:'他の宿泊施設',id:4096},
+{name:'駐車場',id:8192},
+{name:'登山ポスト',id:16384},
+{name:'登山口',id:32768},
+{name:'峠',id:65536},
+{name:'滝',id:131072}
+];
+var addotherID = new Array();
+var otherIDnum;
+var addpp;
+const koya_offset = -0.001;
+const tent_offset = 0.001;
+const rectheight = 0.001;
+const rectwidth = 0.001;
+const huki_offset = 0.001;
+
+var myIcon = L.icon({
+    iconUrl: 'img/862_ch_h.png',
+    iconSize: [30, 30]
+});
+
+$(function () {
+ $('#nanFormModal').on('hidden.bs.modal', function () {
+     for (let i in addMarker) {
+       map.removeLayer(addMarker[i]);
+     }
+     addMarker = [];
+     if (zisseki_disp == 1){
+      for (let i in marker) {
+      //自主の場合、teireiが空欄なので、空欄の場合は"自主"にいれる
+       if (marker[i].teirei == ""){
+          marker[i].teirei = "自主";
+       }
+         if (dropdown_value.teirei == marker[i].teirei || dropdown_value.teirei == "自主or定例"){
+           if (dropdown_value.year == marker[i].year || dropdown_value.year == "2017～2020") {
+             if (dropdown_value.month == marker[i].month || dropdown_value.month == "1～12月") {
+                 var popup2 = L.popup().setContent(marker[i].name + "<br>" + marker[i].date + "<br>" + marker[i].keikakusya);
+                 var addM = L.circleMarker([marker[i].lat, marker[i].lon], {renderer: myRenderer,color: '#3388ff'}).bindPopup(popup2).bindTooltip(marker[i].name).addTo(map);
+                 addMarker.push(addM);
+             }
+           }
+         }
+      }
+     }
+
+   var aryCmp = [];
+   var sonotaflag = false;
+   otherIDnum = 0;
+   for (let i=0;i<addotherID.length;i++) {
+    map.removeLayer(addotherID[i]);
+   }
+   addotherID = [];
+
+   $('[name="yamamark"]:checked').each(function(index,element){
+      aryCmp.push($(element).val());
+      for (let i=0;i < otherID.length ;i++) {
+           if (otherID[i].name == $(element).val()){
+               otherIDnum = otherIDnum + otherID[i].id;
+           }
+      }
+      if($(element).val() == "その他"){
+         sonotaflag = true;
+      }
+   });
+   for(let i=0 ;i<othermarker.length;i++){
+    rectcolor = 0;
+    if( ( (otherIDnum & othermarker[i].othercode) > 0 ) || ( ( sonotaflag == true ) && ( othermarker[i].othercode == 0 ) ) ) {
+
+      var ppContent = '■'+ othermarker[i].name + '<br><a href="https://www.yamareco.com/modules/yamainfo/ptinfo.php?ptid=' + String(othermarker[i].id) + '" target="_blank">ヤマレコリンク(ID:' + String(othermarker[i].id) + ')</a><br>';
+//      if ((1 & othermarker[i].othercode) > 0){
+      if (othermarker[i].yamapID > 0){
+         ppContent = ppContent + '<a href="https://yamap.com/mountains/' + String(othermarker[i].yamapID) + '" target="_blank">YAMAPリンク(ID:' + String(othermarker[i].yamapID) + ')</a><br>';
+      }
+      ppContent = ppContent + '<a href="https://www.yamakei-online.com/yk_map/?latlon=' +String(othermarker[i].lat) + ',' + String(othermarker[i].lng) + '&zoom=14 "target="_blank">YAMAKEIリンク' + '</a><br>'
+                            + '<a href="https://www.google.co.jp/maps/@' + String(othermarker[i].lat) + ',' + String(othermarker[i].lng) + ',15z?hl=ja" target="_blank">GoogleMap' + '</a><br>'
+                            + othermarker[i].text;
+      var othertary = othermarker[i].othertext.split(',');
+      var othertextadd = '<p><div align="left"><ul>'
+      for (let i = 0 ;i < othertary.length-1 ; i++ ){
+       if( i % 2 == 0){
+          othertextadd = othertextadd + '<li>' + othertary[i] + ':';
+       }else{
+          othertextadd = othertextadd + othertary[i] + '</li>';
+       }
+      }
+      othertextadd = othertextadd + '</ul></div></p>';
+      ppContent = ppContent + othertextadd;
+      var pp = L.popup().setContent(ppContent);
+      var rectcolor;
+      var shape = 1;
+//      if( (4 & othermarker[i].othercode) > 0 )
+      if(( (4 & otherIDnum) > 0 ) && ( (4 & othermarker[i].othercode) > 0 ))
+        {
+       addpp = L.circle([othermarker[i].lat,othermarker[i].lng],
+           {
+            color: 'red',
+            radius: 70,
+            fillOpacity: 0,
+           }
+          ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+       addotherID.push(addpp);
+      }
+//      if ((1 & othermarker[i].othercode) > 0 )
+      if (((1 & otherIDnum) > 0 ) && ((1 & othermarker[i].othercode) > 0 ))
+      {
+       addpp = L.polygon([
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng-rectwidth/2],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng+rectwidth/2],
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng]
+         ],
+         {
+           color: 'green',
+           fillColor: '#25dc25',
+           fillOpacity: 0.5,
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+//滝
+//      if( (Math.pow(2,17) & othermarker[i].othercode) > 0 )
+      if(( (Math.pow(2,17) & otherIDnum) > 0 ) && ( (Math.pow(2,17) & othermarker[i].othercode) > 0 ))
+      {
+       rectcolor = '#00ffff';
+      }
+//峠
+//      if( (Math.pow(2,16) & othermarker[i].othercode) > 0 )
+      if(( (Math.pow(2,16) & otherIDnum) > 0 ) && ( (Math.pow(2,16) & othermarker[i].othercode) > 0 ))
+      {
+          addpp = L.polygon([
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng-rectwidth/4],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng-rectwidth/4],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng+rectwidth/4],
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng+rectwidth/4],
+         ],
+         {
+           color: '#a9a9a9',
+           fillColor: '#a9a9a9',
+           fillOpacity: 0.5,
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+//分岐
+//      if( (Math.pow(2,3) & othermarker[i].othercode) > 0 )
+      if(( (Math.pow(2,3) & otherIDnum) > 0 ) && ( (Math.pow(2,3) & othermarker[i].othercode) > 0 ))
+      {
+       addpp = L.circle([othermarker[i].lat,othermarker[i].lng],
+           {
+            color: 'grey',
+            radius: 30,
+            fillOpacity: 0,
+           }
+          ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+       addotherID.push(addpp);      }
+      
+//登山ポスト
+//      if( ( (Math.pow(2,15)|(Math.pow(2,14))|(Math.pow(2,13))|(Math.pow(2,1))) & othermarker[i].othercode) > 0 )
+      if(( ( (Math.pow(2,14)) & otherIDnum) > 0 )
+      && ( ( (Math.pow(2,14)) & othermarker[i].othercode) > 0 ))
+      {
+       rectcolor = '#006400';
+      }
+//登山口
+      if((  (Math.pow(2,15) & otherIDnum) > 0 )
+      && (  (Math.pow(2,15) & othermarker[i].othercode) > 0 ))
+      {
+       rectcolor = '#bb5535';
+      }
+//トイレ
+      if(( (Math.pow(2,1) & otherIDnum) > 0 ) && ( (Math.pow(2,1) & othermarker[i].othercode) > 0 ))
+      {
+       addpp = L.circle([othermarker[i].lat,othermarker[i].lng],
+           {
+            color: '#e7609e',
+            radius: 40,
+            fillOpacity: 0,
+           }
+          ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+       addotherID.push(addpp);      }      
+//駐車場      
+      if (((Math.pow(2,13) & otherIDnum) > 0 ) && ((Math.pow(2,13) & othermarker[i].othercode) > 0 ))
+      {
+       addpp = L.polygon([
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng],
+           [othermarker[i].lat,othermarker[i].lng-rectwidth/2],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng],
+           [othermarker[i].lat,othermarker[i].lng+rectwidth/2],
+         ],
+         {
+           color: '#485859',
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+      
+//水場
+      if((( Math.pow(2,5) & otherIDnum) > 0 )
+      && (( Math.pow(2,5) & othermarker[i].othercode) > 0 ))
+      {
+          addpp = L.polygon([
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng-rectwidth/4],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng-rectwidth/4],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng+rectwidth/4],
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng+rectwidth/4],
+         ],
+         {
+           color: '#0095d9',
+           fillColor: '#bce2e8',
+           fillOpacity: 0.5,
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+//食事
+      if((( Math.pow(2,6) & otherIDnum) > 0 )
+      && (( Math.pow(2,6) & othermarker[i].othercode) > 0 ))
+      {
+         addpp = L.polygon([
+           [othermarker[i].lat,othermarker[i].lng],
+           [othermarker[i].lat+huki_offset,othermarker[i].lng-rectwidth/2+huki_offset],
+           [othermarker[i].lat+rectheight/2+huki_offset,othermarker[i].lng-rectwidth/2+huki_offset],
+           [othermarker[i].lat+rectheight/2+huki_offset,othermarker[i].lng+rectwidth/2+huki_offset],
+           [othermarker[i].lat-rectheight/2+huki_offset,othermarker[i].lng+rectwidth/2+huki_offset],
+           [othermarker[i].lat-rectheight/2+huki_offset,othermarker[i].lng+huki_offset],
+         ],
+         {
+           color: '#ff6347',
+           fillColor: '#ff6347',
+           fillOpacity: 0.5,
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+//お風呂
+      if((( Math.pow(2,7) & otherIDnum) > 0 )
+      && (( Math.pow(2,7) & othermarker[i].othercode) > 0 ))
+      {
+         addpp = L.ellipse([othermarker[i].lat,othermarker[i].lng], [100, 50], 0,
+         {
+           color: '#ff4500',
+           fillColor: '#f6bfbc',
+           fillOpacity: 0.5,
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+
+      
+//山小屋
+      if(( ( (Math.pow(2,4)) & otherIDnum) > 0 )
+      && ( ( (Math.pow(2,4)) & othermarker[i].othercode) > 0 ))
+      {
+       addpp = L.polygon([
+           [othermarker[i].lat+rectheight,othermarker[i].lng],
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng-rectwidth/2],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng-rectwidth/2],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng+rectwidth/2],
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng+rectwidth/2],
+         ],
+         {
+           color: '#32cd32',
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+//テント場
+      if(( ( (Math.pow(2,8)) & otherIDnum) > 0 )
+      && ( ( (Math.pow(2,8)) & othermarker[i].othercode) > 0 ))
+      {
+       addpp = L.polygon([
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng+tent_offset],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng-rectwidth+tent_offset],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng+rectwidth+tent_offset],
+           [othermarker[i].lat+rectheight/2,othermarker[i].lng+tent_offset],
+           [othermarker[i].lat-rectheight/2,othermarker[i].lng+rectwidth/2+tent_offset],
+         ],
+         {
+           color: '#8b0000',
+         }
+        ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+      
+//バス停	駅	
+      if(( ( (Math.pow(2,9)|(Math.pow(2,10))) & otherIDnum) > 0 )
+      && ( ( (Math.pow(2,9)|(Math.pow(2,10))) & othermarker[i].othercode) > 0 ))
+      {
+       rectcolor = '#250000';
+      }
+//他の宿泊場所	
+      if(( ( (Math.pow(2,12)) & otherIDnum) > 0 )
+      && ( ( (Math.pow(2,12)) & othermarker[i].othercode) > 0 ))
+      {
+       rectcolor = '#200000';
+       console.log('しせつ');
+      }
+//その他
+//      if( ( sonotaflag == true ) && ( othermarker[i].othercode == 0 ) )
+      if( ( sonotaflag == true ) && ( otherIDnum == 0 )  && ( othermarker[i].othercode == 0 ) )
+      {
+       rectcolor = '#87ceeb';
+      }
+//      if((rectcolor == '#bb5535')|(rectcolor == '#200000')|(rectcolor == '#250000')|(rectcolor == '#644000')|(rectcolor == '#a9a9a9')|(rectcolor == '#808080')|(rectcolor == '#006400')|(rectcolor == '#87ceeb')|(rectcolor == '#00ffff'))
+      if((rectcolor == '#006400')|(rectcolor == '#bb5535')|(rectcolor == '#200000')|(rectcolor == '#250000')|(rectcolor == '#87ceeb')|(rectcolor == '#00ffff'))
+      {
+        imageBounds =L.latLngBounds([othermarker[i].lat-rectheight/2,othermarker[i].lng-rectwidth/2],
+          [othermarker[i].lat+rectheight/2,othermarker[i].lng+rectwidth/2]);
+        addpp = L.rectangle(imageBounds, {color: rectcolor, weight:5}).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
+        addotherID.push(addpp);
+      }
+    }
+   }
+
+ })
+});
+
+$(function(){
+ $('#nanform').on('click', function() {
+ const nanFormModal = new bootstrap.Modal(document.getElementById('nanFormModal'), {
+ });
+ nanFormModal.show();
+ })
+})
+
+
+$(function(){
+ $('#button-addon2').on('click', function() {
+   if((y_lat != undefined) && (y_lng != undefined)){
+     map.setView([y_lat,y_lng], 15);
+   }
+ })
+})
+
+
+
+
+$(function(){
+ $('#zisseki').on('change', function() {
+   if ($('#zisseki:checked').val() == "on"){
+      zisseki_disp = 1;
+   }else{
+      zisseki_disp = 0;
+   }
+ })
+})
+
+
+//定例or自主、年、月を選択された時に地図上マーカーを更新する。
+//全部or定例or自主
+//2017～2020、2017,2018,2019,2020年
+//1～12月
+//http://doop-web.com/blog/archives/1064
+var dropdown_value = {teirei: "自主or定例", year:"2017～2020" ,month:"1～12月"};
+var addMarker = new Array();
+var visibleTag;
+var hiddenTag;
+
+function zisseki_point() {
+
+   for (let i in addMarker) {
+    map.removeLayer(addMarker[i]);
+   }
+   addMarker = [];
+   if (zisseki_disp == 1){
+
+   for (let i in marker) {
+   //自主の場合、teireiが空欄なので、空欄の場合は"自主"にいれる
+    if (marker[i].teirei == ""){
+       marker[i].teirei = "自主";
+    }
+      if (dropdown_value.teirei == marker[i].teirei || dropdown_value.teirei == "自主or定例"){
+        if (dropdown_value.year == marker[i].year || dropdown_value.year == "2017～2020") {
+          if (dropdown_value.month == marker[i].month || dropdown_value.month == "1～12月") {
+              var popup2 = L.popup().setContent(marker[i].name + "<br>" + marker[i].date + "<br>" + marker[i].keikakusya);
+              var addM = L.circleMarker([marker[i].lat, marker[i].lon], {renderer: myRenderer,color: '#3388ff'}).bindPopup(popup2).bindTooltip(marker[i].name).addTo(map);
+              addMarker.push(addM);
+          }
+        }
+      }
+   }
+   }
+
+}
+
+var zisseki_disp = 0;
+$(function(){
+ $('#zisseki').on('change', function() {
+   if ($('#zisseki:checked').val() == "on"){
+      zisseki_disp = 1;
+//      zisseki_point();
+   }else{
+      zisseki_disp = 0;
+//      for (let i in addMarker) {
+//       map.removeLayer(addMarker[i]);
+//      }
+//      addMarker = [];
+   }
+ })
+})
+
+
+$(function(){
+  $('.dropdown-menu a').click(function(){
+    //反映先の要素名を取得
+   visibleTag = $(this).parents('ul').attr('visibleTag');
+   hiddenTag = $(this).parents('ul').attr('hiddenTag');
+   //選択された内容でボタンの表示を変える
+   $(visibleTag).html($(this).attr('value'));
+   //選択された内容でhidden項目の値を変える
+   $(hiddenTag).val($(this).attr('value'));
+
+   if(visibleTag == "#visibleValue_teirei"){
+     dropdown_value.teirei = $(this).attr('value');
+   }else if(visibleTag == "#visibleValue_year"){
+     dropdown_value.year = $(this).attr('value');
+   }else if(visibleTag == "#visibleValue_month"){
+     dropdown_value.month = $(this).attr('value');
+   }else{
+     console.log(visibleTag);
+   }
+//   zisseki_point();
+
+ })
+})
+
+var map;
+var myRenderer;
+
+var pline;
+var latlngs = [];
+var linecount = 0;
+var distancia;
+var altinfo;
+var section;
+var tileSelectName="地理院地図";
+
+function init() {
+  map = L.map('mapcontainer', { zoomControl: false ,preferCanvas: true});
+  map.setView([35.205327,137.169935], 13);
+  var gsiattr = "<a href='http://portal.cyberjapan.jp/help/termsofuse.html' target='_blank'>地理院タイル</a>";
+  var tisituattr = "<a href='https://gbank.gsj.jp/seamless/v2/api/1.2/legend.html' target='_blank'>地質凡例</a>";
+  var gsi = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: gsiattr });
+  var tisitu = L.tileLayer('https://gbank.gsj.jp/seamless/v2/api/1.2/tiles/{z}/{y}/{x}.png', { attribution: tisituattr });
+  var googlem = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{maxzoom:20,subdomains:['mt0','mt1','mt2','mt3'],attribution: 'Map data c GoogleMap'});
+  
+  //オーバーレイ用のタイルレイヤ
+  //opacityで透過度を設定、maxNativeZoomを指定すると、それ以上のズームレベルのタイルデータは、指定のズームレベルのタイル画像を拡大して表示される
+  var gsirelief = L.tileLayer('http://cyberjapandata.gsi.go.jp/xyz/relief/{z}/{x}/{y}.png', { opacity: 0.5, maxNativeZoom: 15, attribution: gsiattr });
+  var gsirehillshademap = L.tileLayer('http://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png', { opacity: 0.3, maxNativeZoom: 16, attribution: gsiattr });
+
+  var overlayMaps = {
+    "色別標高図": gsirelief,
+    "陰影起伏図": gsirehillshademap
+  };
+  var baseMaps = {
+    "地理院地図": gsi,
+    "シームレス地質図": tisitu,
+    "Google": googlem
+  };
+  L.control.layers(baseMaps, overlayMaps).addTo(map);
+  gsi.addTo(map);
+
+  //(5)レイヤー変更イベント
+  map.on('baselayerchange', function(e){
+    tileSelectName=e.name;
+  });
+
+  L.control.scale({ maxWidth: 200, position: 'topleft', imperial: false }).addTo(map);
+  if (zisseki_disp == 1){
+     for (let i in marker) {
+        var popup2 = L.popup().setContent(marker[i].name);
+        var addM = L.circleMarker([marker[i].lat, marker[i].lon], {renderer: myRenderer,color: '#3388ff'}).bindPopup(popup2).bindTooltip(marker[i].name).addTo(map);
+        addMarker.push(addM); 
+     }
+  }
+  L.control.browserPrint(
+    {
+    	printModes: [
+		L.control.browserPrint.mode.portrait(),
+		L.control.browserPrint.mode.landscape()
+	],
+	manualMode: false
+    }).addTo(map);
+//印刷にスケール出すための対応(https://stackoverflow.com/questions/47653070/leaflet-browser-print-plugin-doesnt-show-scale-on-print)
+    map.on("browser-print-start", function(e){
+        L.control.scale({
+            position: 'topleft',
+            imperial: false,
+            maxWidth: 200
+        }).addTo(e.printMap);
+    });
+  map.on('click', onMapClick);
+  //plineをpolylineオブジェクトとし、空の座標を入れて地図に追加
+  //bubblingMouseEvents属性をfalseに設定しておき、イベントがmapオブジェクトに連鎖するのを防ぐ
+  pline = L.polyline([], { color: 'blue', weight: 5, opacity:0.5,dashArray:'10',bubblingMouseEvents: false }).addTo(map);
+  //現在地表示。httpsでないと使えないから現状は保留
+  //L.control.locate().addTo(map);
+
+  // loading GeoJSON file - Here my html and usa_adm.geojson file resides in same folder
+  //$.getJSON("route-1110.json",function(data){
+  $.getJSON("syoudoushin.json",function(data){
+  // L.geoJson function is used to parse geojson file and load on to map
+  var datalayer = L.geoJson(data ,{
+  onEachFeature: function(feature, featureLayer) {
+  var ppup = L.popup().setContent(feature.properties.name + '<br><a href= "https://www.yamareco.com/modules/yamainfo/guide_detail.php?route_id=1110" target="_blank">yamareko</a>');
+  featureLayer.bindPopup(ppup);
+  }
+  }).addTo(map);
+  });
+
+}
+
+function onMapClick(e) {
+  
+  if(tileSelectName == "シームレス地質図"){
+    getGeoData(e);
+  }else{
+     //地図のclickイベント呼び出される
+     //クリック地点の座標にマーカーを追加、マーカーのclickイベントでonMarkerClick関数を呼び出し
+     //var mk = L.marker(e.latlng).on('click', onMarkerClick).addTo(map);
+     var mk = L.marker(e.latlng,{icon: myIcon}).on('click', onMarkerClick).addTo(map);
+     //地図のclickイベントで呼び出される
+     //plineにクリック地点の座標を追加する
+     pline.addLatLng(e.latlng);
+     pline.on('dblclick', onLinedblClick);
+
+     distancia = 0;
+     latlngs = pline.getLatLngs();
+     //標高をゲット
+     var script = document.createElement('script');
+     script.src = 'https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=' + e.latlng.lng + '&lat=' + e.latlng.lat + '&callback=myfunc';
+     document.getElementsByTagName('head')[0].appendChild(script);
+     var elev;
+     //非同期通信で取ってくるので、elevはこの関数の一番後に実施される
+     window.myfunc = function(results){
+        elev = results.elevation;
+        if (elev) {altinfo = '標高：' + elev + ' m';} else {altinfo = '標高：（GSI サーバーが利用できません）';}
+        mk.on('mouseover', function (e) {this.openPopup();});
+//        mk.on('mouseout', function (e) {this.closePopup();});
+        mk.bindPopup('北緯：' + e.latlng.lat + '<br>' + '東経：' + e.latlng.lng + '<br>' + '区間：' +section.toFixed(1) + 'm' + '<br>' + altinfo);
+        pointlatlng.push(L.latLng( e.latlng.lat,e.latlng.lng ,parseFloat(elev)));
+     };
+     if (latlngs.length >= 2) {
+       for (var i = 0; i < latlngs.length-1; i++) {
+          distancia += latlngs[i].distanceTo(latlngs[i+1]);
+          section = latlngs[i].distanceTo(latlngs[i+1]);
+       }
+     }
+     else{
+      section = 0;
+     }
+
+     linecount++;
+  }
+}
+
+function onMarkerClick(e) {
+  //マーカーのclickイベント呼び出される
+  //マーカーをレイヤから削除
+  map.removeLayer(e.target);
+  //クリックされた緯度経度をplineオブジェクトから検索し、削除する
+  latlngs = pline.getLatLngs();
+  for(let i= 0;i<latlngs.length;i++){
+   if((latlngs[i].lat == e.latlng.lat) && (latlngs[i].lng == e.latlng.lng)){
+     latlngs.splice(i,1);
+     pointlatlng.splice(i,1);
+   }
+  }
+  linecount--;
+  pline.setLatLngs(latlngs);
+}
+
+function onLinedblClick(e) {
+ console.log("ダブルクリックされた");
+ const myModal = new bootstrap.Modal(document.getElementById('myModal'), {
+ });
+ myModal.show();
+ getPostData();
+}
+</script>
+<body>
+<nav class="navbar navbar-light bg-light">
+  <div class="container-fluid">
+    <form class="d-flex">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation" id="nanform">
+      <span class="navbar-toggler-icon"></span>
+      </button>
+      <!-- サジェスト風検索窓 -->
+      <div class="col-xs-2">
+      <input id="text" type="text" class="form-control" placeholder="山名など入力" aria-label="Recipient's username" aria-describedby="button-addon2" size="30">
+      <!-- 補完候補を表示するエリア -->
+      <div id="suggest" style="display:none; z-index: 2;" tabindex="-1" ></div>
+      </div>
+      <button class="btn btn-outline-secondary" type="button" id="button-addon2">移動</button>
+    </form>
+    <a href="//af.moshimo.com/af/c/click?a_id=3651363&p_id=54&pc_id=54&pl_id=616&guid=ON" rel="nofollow" referrerpolicy="no-referrer-when-downgrade"><img src="//image.moshimo.com/af-img/0032/000000000616.gif" width="88" height="31" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=3651363&p_id=54&pc_id=54&pl_id=616" width="1" height="1" style="border:none;">
+  </div>
+</nav>
+                <!-- 下のコンテンツ -->
+                <div id="mapcontainer" class="container-fluid w-100 content p-3" style="position:absolute;top:50px;left:0;right:0;bottom:0; z-index: 1;">
+                </div>
+                <!-- 下のコンテンツ -->
+<!-- 全ページを囲む要素 --> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script> 
+
+<div class="modal" id="nanFormModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">設定</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+                <div class="form-check form-switch">
+                 <input class="form-check-input" type="checkbox" id="zisseki">
+                 <label class="form-check-label" for="flexSwitchCheckDefault">山行実績表示</label>
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <span id="visibleValue_teirei">自主or定例</span>
+                  </button>
+              	<ul class="dropdown-menu" role="menu" hiddenTag="#hiddenValue_teirei" visibleTag="#visibleValue_teirei" id="zisseki_teirei">
+              		<li><a class="dropdown-item" href="#" value="自主or定例">自主or定例</a></li>
+              		<li><a class="dropdown-item" href="#" value="定例">定例</a></li>
+              		<li><a class="dropdown-item" href="#" value="合宿">合宿</a></li>
+              		<li><a class="dropdown-item" href="#" value="自主">自主</a></li>
+              	</ul>
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="zisseki_year">
+                  <span id="visibleValue_year">2017～2020</span>
+                  </button>
+              	<ul class="dropdown-menu" role="menu" hiddenTag="#hiddenValue_year" visibleTag="#visibleValue_year">
+              		<li><a class="dropdown-item" href="#" value="2017～2020">2017～2020</a></li>
+              		<li><a class="dropdown-item" href="#" value="2017">2017</a></li>
+              		<li><a class="dropdown-item" href="#" value="2018">2018</a></li>
+              		<li><a class="dropdown-item" href="#" value="2019">2019</a></li>
+              		<li><a class="dropdown-item" href="#" value="2020">2020</a></li>
+              	</ul>
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="zisseki_month">
+                  <span id="visibleValue_month">1～12月</span>
+                  </button>
+              	<ul class="dropdown-menu" role="menu" hiddenTag="#hiddenValue_month" visibleTag="#visibleValue_month">
+              		<li><a class="dropdown-item" href="#" value="1～12月">1～12月</a></li>
+              		<li><a class="dropdown-item" href="#" value="1">1月</a></li>
+              		<li><a class="dropdown-item" href="#" value="2">2月</a></li>
+              		<li><a class="dropdown-item" href="#" value="3">3月</a></li>
+              		<li><a class="dropdown-item" href="#" value="4">4月</a></li>
+              		<li><a class="dropdown-item" href="#" value="5">5月</a></li>
+              		<li><a class="dropdown-item" href="#" value="6">6月</a></li>
+              		<li><a class="dropdown-item" href="#" value="7">7月</a></li>
+              		<li><a class="dropdown-item" href="#" value="8">8月</a></li>
+              		<li><a class="dropdown-item" href="#" value="9">9月</a></li>
+              		<li><a class="dropdown-item" href="#" value="10">10月</a></li>
+              		<li><a class="dropdown-item" href="#" value="11">11月</a></li>
+              		<li><a class="dropdown-item" href="#" value="12">12月</a></li>
+              	</ul>
+                </div>
+                <br>
+                <div class="border-bottom"></div>
+                <h6>チェックポイント</h6>
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="山頂">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    <span style="color:#ffffff;background-color:#0000ff">山頂</span>
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="展望ポイント">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    <span style="color:#ffffff;background-color:#ff4500">展望ポイント</span>
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="分岐">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    <span style="color:#ffffff;background-color:#808080">分岐</span>
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="峠">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    <span style="color:#ffffff;background-color:#808080">峠</span>
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="滝">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    <span style="color:#000000;background-color:#00ffff">滝</span>
+                  </label>
+                </div>
+                <!--
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="登山ポスト">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    <span style="color:#ffffff;background-color:#006400">登山ポスト</span>
+                  </label>
+                </div>
+                -->
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="登山口">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    <span style="color:#ffffff;background-color:#bb5535">登山口</span>
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="トイレ">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    <span style="color:#ffffff;background-color:#e7609e">トイレ</span>
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="駐車場">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    <span style="color:#ffffff;background-color:#485859">駐車場</span>
+                  </label>
+                </div>
+                <!--
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="その他">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    <span style="color:#ffffff;background-color:#006400">その他</span>
+                  </label>
+                </div>
+                -->
+                <div class="border-bottom"></div>
+                <h6>停滞ポイント</h6>
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="山小屋">
+                  <label class="form-check-label" for="flexCheckDefault">
+                  <img  src="img/koya.png" width="20" height="20">
+                    山小屋
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="テント場">
+                  <label class="form-check-label" for="flexCheckDefault">
+                  <img  src="img/tent.png" width="20" height="20">
+                    テント場
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="水場">
+                  <label class="form-check-label" for="flexCheckChecked">
+                  <img  src="img/mizuba.png" width="10" height="20">
+                    水場
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="食事">
+                  <label class="form-check-label" for="flexCheckDefault">
+                  <img  src="img/mesi.png" width="20" height="20">
+                    食事
+                  </label>
+                </div>
+
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="お風呂">
+                  <label class="form-check-label" for="flexCheckChecked">
+                  <img  src="img/huro.png" width="20" height="10">
+                    お風呂
+                  </label>
+                </div>
+                
+                <div class="border-bottom"></div>
+                <h6>アクセス関連</h6>
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="バス停">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    バス停
+                  </label>
+                </div>
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="駅">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    駅
+                  </label>
+                </div>
+                <!--
+                <div class="form-check-inline">
+                  <input class="form-check-input" type="checkbox"  name="yamamark"  value="他の宿泊施設">
+                  <label class="form-check-label" for="flexCheckChecked">
+                    他の宿泊施設
+                  </label>
+                </div>
+                -->
+
+      </div>
+      <div class="modal-footer">
+	<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- モーダル・ダイアログ -->
+
+<div class="modal" id="myModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">ポイント間の距離と標高の変化</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+	<div id="stage"></div>
+      </div>
+      <div class="modal-footer">
+	<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>

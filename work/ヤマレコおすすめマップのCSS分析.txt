@@ -1,0 +1,20 @@
+﻿<span class="type label2">
+1泊2日
+</span>
+#centercolumn > div.guide_detail > div:nth-child(4) > span.type.label2
+
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(1) > div > span
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div > span
+
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div.date.bg-lg.pl10.pr10.mt5.mb5 > div > span:nth-child(1)
+
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(1) > div
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div
+
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div > span:nth-child(1)
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(2) > div > span:nth-child(2)
+
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(3) > div > span:nth-child(1)
+#record_detail > div:nth-child(4) > div > table > tbody > tr:nth-child(1) > td > div:nth-child(3) > div > span:nth-child(2)
+
+spanで取ってきて、エクセルで時間と分に分割しよう
