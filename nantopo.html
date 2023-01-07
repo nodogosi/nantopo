@@ -110,23 +110,6 @@ $(function () {
        map.removeLayer(addMarker[i]);
      }
      addMarker = [];
-     if (zisseki_disp == 1){
-      for (let i in marker) {
-      //自主の場合、teireiが空欄なので、空欄の場合は"自主"にいれる
-       if (marker[i].teirei == ""){
-          marker[i].teirei = "自主";
-       }
-         if (dropdown_value.teirei == marker[i].teirei || dropdown_value.teirei == "自主or定例"){
-           if (dropdown_value.year == marker[i].year || dropdown_value.year == "2017～2020") {
-             if (dropdown_value.month == marker[i].month || dropdown_value.month == "1～12月") {
-                 var popup2 = L.popup().setContent(marker[i].name + "<br>" + marker[i].date + "<br>" + marker[i].keikakusya);
-                 var addM = L.circleMarker([marker[i].lat, marker[i].lon], {renderer: myRenderer,color: '#3388ff'}).bindPopup(popup2).bindTooltip(marker[i].name).addTo(map);
-                 addMarker.push(addM);
-             }
-           }
-         }
-      }
-     }
 
    var sonotaflag = false;
    otherIDnum = 0;
@@ -371,12 +354,10 @@ $(function () {
        console.log('しせつ');
       }
 //その他
-//      if( ( sonotaflag == true ) && ( othermarker[i].othercode == 0 ) )
       if( ( sonotaflag == true ) && ( otherIDnum == 0 )  && ( othermarker[i].othercode == 0 ) )
       {
        rectcolor = '#87ceeb';
       }
-//      if((rectcolor == '#bb5535')|(rectcolor == '#200000')|(rectcolor == '#250000')|(rectcolor == '#644000')|(rectcolor == '#a9a9a9')|(rectcolor == '#808080')|(rectcolor == '#006400')|(rectcolor == '#87ceeb')|(rectcolor == '#00ffff'))
       if((rectcolor == '#006400')|(rectcolor == '#bb5535')|(rectcolor == '#200000')|(rectcolor == '#250000')|(rectcolor == '#87ceeb')|(rectcolor == '#00ffff'))
       {
         imageBounds =L.latLngBounds([othermarker[i].lat-rectheight/2,othermarker[i].lng-rectwidth/2],
@@ -410,7 +391,7 @@ $(function(){
 
 
 
-$(function(){
+/* $(function(){
  $('#zisseki').on('change', function() {
    if ($('#zisseki:checked').val() == "on"){
       zisseki_disp = 1;
@@ -418,7 +399,7 @@ $(function(){
       zisseki_disp = 0;
    }
  })
-})
+}) */
 
 
 //定例or自主、年、月を選択された時に地図上マーカーを更新する。
@@ -426,47 +407,9 @@ $(function(){
 //2017～2020、2017,2018,2019,2020年
 //1～12月
 //http://doop-web.com/blog/archives/1064
-var dropdown_value = {teirei: "自主or定例", year:"2017～2020" ,month:"1～12月"};
+/* var dropdown_value = {teirei: "自主or定例", year:"2017～2020" ,month:"1～12月"};
+ */
 var addMarker = new Array();
-var visibleTag;
-var hiddenTag;
-
-
-var zisseki_disp = 0;
-$(function(){
- $('#zisseki').on('change', function() {
-   if ($('#zisseki:checked').val() == "on"){
-      zisseki_disp = 1;
-   }else{
-      zisseki_disp = 0;
-   }
- })
-})
-
-
-$(function(){
-  $('.dropdown-menu a').click(function(){
-    //反映先の要素名を取得
-   visibleTag = $(this).parents('ul').attr('visibleTag');
-   hiddenTag = $(this).parents('ul').attr('hiddenTag');
-   //選択された内容でボタンの表示を変える
-   $(visibleTag).html($(this).attr('value'));
-   //選択された内容でhidden項目の値を変える
-   $(hiddenTag).val($(this).attr('value'));
-
-   if(visibleTag == "#visibleValue_teirei"){
-     dropdown_value.teirei = $(this).attr('value');
-   }else if(visibleTag == "#visibleValue_year"){
-     dropdown_value.year = $(this).attr('value');
-   }else if(visibleTag == "#visibleValue_month"){
-     dropdown_value.month = $(this).attr('value');
-   }else{
-     console.log(visibleTag);
-   }
-
- })
-})
-
 var map;
 var myRenderer;
 
@@ -510,13 +453,6 @@ function init() {
   });
 
   L.control.scale({ maxWidth: 200, position: 'topleft', imperial: false }).addTo(map);
-  if (zisseki_disp == 1){
-     for (let i in marker) {
-        var popup2 = L.popup().setContent(marker[i].name);
-        var addM = L.circleMarker([marker[i].lat, marker[i].lon], {renderer: myRenderer,color: '#3388ff'}).bindPopup(popup2).bindTooltip(marker[i].name).addTo(map);
-        addMarker.push(addM); 
-     }
-  }
   L.control.browserPrint(
     {
     	printModes: [
@@ -579,7 +515,6 @@ function onMapClick(e) {
         elev = results.elevation;
         if (elev) {altinfo = '標高：' + elev + ' m';} else {altinfo = '標高：（GSI サーバーが利用できません）';}
         mk.on('mouseover', function (e) {this.openPopup();});
-//        mk.on('mouseout', function (e) {this.closePopup();});
         mk.bindPopup('北緯：' + e.latlng.lat + '<br>' + '東経：' + e.latlng.lng + '<br>' + '区間：' +section.toFixed(1) + 'm' + '<br>' + altinfo);
         pointlatlng.push(L.latLng( e.latlng.lat,e.latlng.lng ,parseFloat(elev)));
      };
@@ -654,55 +589,6 @@ function onLinedblClick(e) {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-                <div class="form-check form-switch">
-                 <input class="form-check-input" type="checkbox" id="zisseki">
-                 <label class="form-check-label" for="flexSwitchCheckDefault">山行実績表示</label>
-                </div>
-                <div class="btn-group">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <span id="visibleValue_teirei">自主or定例</span>
-                  </button>
-              	<ul class="dropdown-menu" role="menu" hiddenTag="#hiddenValue_teirei" visibleTag="#visibleValue_teirei" id="zisseki_teirei">
-              		<li><a class="dropdown-item" href="#" value="自主or定例">自主or定例</a></li>
-              		<li><a class="dropdown-item" href="#" value="定例">定例</a></li>
-              		<li><a class="dropdown-item" href="#" value="合宿">合宿</a></li>
-              		<li><a class="dropdown-item" href="#" value="自主">自主</a></li>
-              	</ul>
-                </div>
-                <div class="btn-group">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="zisseki_year">
-                  <span id="visibleValue_year">2017～2020</span>
-                  </button>
-              	<ul class="dropdown-menu" role="menu" hiddenTag="#hiddenValue_year" visibleTag="#visibleValue_year">
-              		<li><a class="dropdown-item" href="#" value="2017～2020">2017～2020</a></li>
-              		<li><a class="dropdown-item" href="#" value="2017">2017</a></li>
-              		<li><a class="dropdown-item" href="#" value="2018">2018</a></li>
-              		<li><a class="dropdown-item" href="#" value="2019">2019</a></li>
-              		<li><a class="dropdown-item" href="#" value="2020">2020</a></li>
-              	</ul>
-                </div>
-                <div class="btn-group">
-                  <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="zisseki_month">
-                  <span id="visibleValue_month">1～12月</span>
-                  </button>
-              	<ul class="dropdown-menu" role="menu" hiddenTag="#hiddenValue_month" visibleTag="#visibleValue_month">
-              		<li><a class="dropdown-item" href="#" value="1～12月">1～12月</a></li>
-              		<li><a class="dropdown-item" href="#" value="1">1月</a></li>
-              		<li><a class="dropdown-item" href="#" value="2">2月</a></li>
-              		<li><a class="dropdown-item" href="#" value="3">3月</a></li>
-              		<li><a class="dropdown-item" href="#" value="4">4月</a></li>
-              		<li><a class="dropdown-item" href="#" value="5">5月</a></li>
-              		<li><a class="dropdown-item" href="#" value="6">6月</a></li>
-              		<li><a class="dropdown-item" href="#" value="7">7月</a></li>
-              		<li><a class="dropdown-item" href="#" value="8">8月</a></li>
-              		<li><a class="dropdown-item" href="#" value="9">9月</a></li>
-              		<li><a class="dropdown-item" href="#" value="10">10月</a></li>
-              		<li><a class="dropdown-item" href="#" value="11">11月</a></li>
-              		<li><a class="dropdown-item" href="#" value="12">12月</a></li>
-              	</ul>
-                </div>
-                <br>
-                <div class="border-bottom"></div>
                 <h6>チェックポイント</h6>
                 <div class="form-check-inline">
                   <input class="form-check-input" type="checkbox"  name="yamamark"  value="山頂">
