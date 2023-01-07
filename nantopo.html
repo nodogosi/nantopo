@@ -27,9 +27,8 @@
 
     <!--サジェスト風検索窓-->
     <script src="./suggest.js"></script>
-    <script src="./yamakensaku.js"></script>
 
-    <title>SideBar menu</title>
+    <title>Docoyanen</title>
 <style type="text/css">
 /* サジェスト風検索窓用 */
         #suggest {
@@ -95,12 +94,11 @@ var otherID = [
 var addotherID = new Array();
 var otherIDnum;
 var addpp;
-const koya_offset = -0.001;
 const tent_offset = 0.001;
 const rectheight = 0.001;
 const rectwidth = 0.001;
 const huki_offset = 0.001;
-
+//地図クリック時のアイコン
 var myIcon = L.icon({
     iconUrl: 'img/862_ch_h.png',
     iconSize: [30, 30]
@@ -130,7 +128,6 @@ $(function () {
       }
      }
 
-   var aryCmp = [];
    var sonotaflag = false;
    otherIDnum = 0;
    for (let i=0;i<addotherID.length;i++) {
@@ -139,7 +136,6 @@ $(function () {
    addotherID = [];
 
    $('[name="yamamark"]:checked').each(function(index,element){
-      aryCmp.push($(element).val());
       for (let i=0;i < otherID.length ;i++) {
            if (otherID[i].name == $(element).val()){
                otherIDnum = otherIDnum + otherID[i].id;
@@ -154,7 +150,6 @@ $(function () {
     if( ( (otherIDnum & othermarker[i].othercode) > 0 ) || ( ( sonotaflag == true ) && ( othermarker[i].othercode == 0 ) ) ) {
 
       var ppContent = '■'+ othermarker[i].name + '<br><a href="https://www.yamareco.com/modules/yamainfo/ptinfo.php?ptid=' + String(othermarker[i].id) + '" target="_blank">ヤマレコリンク(ID:' + String(othermarker[i].id) + ')</a><br>';
-//      if ((1 & othermarker[i].othercode) > 0){
       if (othermarker[i].yamapID > 0){
          ppContent = ppContent + '<a href="https://yamap.com/mountains/' + String(othermarker[i].yamapID) + '" target="_blank">YAMAPリンク(ID:' + String(othermarker[i].yamapID) + ')</a><br>';
       }
@@ -175,7 +170,6 @@ $(function () {
       var pp = L.popup().setContent(ppContent);
       var rectcolor;
       var shape = 1;
-//      if( (4 & othermarker[i].othercode) > 0 )
       if(( (4 & otherIDnum) > 0 ) && ( (4 & othermarker[i].othercode) > 0 ))
         {
        addpp = L.circle([othermarker[i].lat,othermarker[i].lng],
@@ -187,7 +181,6 @@ $(function () {
           ).bindPopup(pp).bindTooltip(othermarker[i].name).addTo(map);
        addotherID.push(addpp);
       }
-//      if ((1 & othermarker[i].othercode) > 0 )
       if (((1 & otherIDnum) > 0 ) && ((1 & othermarker[i].othercode) > 0 ))
       {
        addpp = L.polygon([
@@ -204,13 +197,11 @@ $(function () {
         addotherID.push(addpp);
       }
 //滝
-//      if( (Math.pow(2,17) & othermarker[i].othercode) > 0 )
       if(( (Math.pow(2,17) & otherIDnum) > 0 ) && ( (Math.pow(2,17) & othermarker[i].othercode) > 0 ))
       {
        rectcolor = '#00ffff';
       }
 //峠
-//      if( (Math.pow(2,16) & othermarker[i].othercode) > 0 )
       if(( (Math.pow(2,16) & otherIDnum) > 0 ) && ( (Math.pow(2,16) & othermarker[i].othercode) > 0 ))
       {
           addpp = L.polygon([
@@ -228,7 +219,6 @@ $(function () {
         addotherID.push(addpp);
       }
 //分岐
-//      if( (Math.pow(2,3) & othermarker[i].othercode) > 0 )
       if(( (Math.pow(2,3) & otherIDnum) > 0 ) && ( (Math.pow(2,3) & othermarker[i].othercode) > 0 ))
       {
        addpp = L.circle([othermarker[i].lat,othermarker[i].lng],
@@ -241,7 +231,6 @@ $(function () {
        addotherID.push(addpp);      }
       
 //登山ポスト
-//      if( ( (Math.pow(2,15)|(Math.pow(2,14))|(Math.pow(2,13))|(Math.pow(2,1))) & othermarker[i].othercode) > 0 )
       if(( ( (Math.pow(2,14)) & otherIDnum) > 0 )
       && ( ( (Math.pow(2,14)) & othermarker[i].othercode) > 0 ))
       {
