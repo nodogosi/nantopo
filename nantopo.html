@@ -13,17 +13,10 @@
     <script src="https://unpkg.com/leaflet@1.3.0/dist/leaflet.js"></script>
     <script src="./dist/leaflet.browser.print.min.js"></script>
     <script src="./src/leaflet.browser.print.sizes.js"></script>
-    <script src="./sankozissekihyou.js"></script>
     <script src="./othermarker.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="./lib/getPostData.js"></script>
     <script src="./lib/getGeoData.js"></script>
     <script src="./lib/l.ellipse.js"></script>
-
-    <!--現在地表示-->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.73.0/dist/L.Control.Locate.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol@0.73.0/dist/L.Control.Locate.min.js" charset="utf-8"></script>
 
     <!--サジェスト風検索窓-->
     <script src="./suggest.js"></script>
@@ -59,13 +52,12 @@
 /* サジェスト風検索窓用 */
 </style>
 <script>
-    // wondowのonloadイベントでSuggestを生成
-    // (listは、list.js内で定義している)
-    var start = function(){new Suggest.Local("text", "suggest", yamakensaku, {dispMax: 100, highlight: true});};
-    window.addEventListener ?
-      window.addEventListener('load', start, false) :
-      window.attachEvent('onload', start);
-
+// wondowのonloadイベントでSuggestを生成
+// (listは、list.js内で定義している)
+var start = function(){new Suggest.Local("text", "suggest", yamakensaku, {dispMax: 100, highlight: true});};
+window.addEventListener ?
+  window.addEventListener('load', start, false) :
+  window.attachEvent('onload', start);
 window.onload = () => {
     init();
 }
@@ -98,11 +90,6 @@ const tent_offset = 0.001;
 const rectheight = 0.001;
 const rectwidth = 0.001;
 const huki_offset = 0.001;
-//地図クリック時のアイコン
-var myIcon = L.icon({
-    iconUrl: 'img/862_ch_h.png',
-    iconSize: [30, 30]
-});
 
 $(function () {
  $('#nanFormModal').on('hidden.bs.modal', function () {
@@ -388,27 +375,6 @@ $(function(){
  })
 })
 
-
-
-
-/* $(function(){
- $('#zisseki').on('change', function() {
-   if ($('#zisseki:checked').val() == "on"){
-      zisseki_disp = 1;
-   }else{
-      zisseki_disp = 0;
-   }
- })
-}) */
-
-
-//定例or自主、年、月を選択された時に地図上マーカーを更新する。
-//全部or定例or自主
-//2017～2020、2017,2018,2019,2020年
-//1～12月
-//http://doop-web.com/blog/archives/1064
-/* var dropdown_value = {teirei: "自主or定例", year:"2017～2020" ,month:"1～12月"};
- */
 var addMarker = new Array();
 var map;
 var myRenderer;
@@ -469,92 +435,16 @@ function init() {
             maxWidth: 200
         }).addTo(e.printMap);
     });
-  map.on('click', onMapClick);
-  //plineをpolylineオブジェクトとし、空の座標を入れて地図に追加
-  //bubblingMouseEvents属性をfalseに設定しておき、イベントがmapオブジェクトに連鎖するのを防ぐ
-  pline = L.polyline([], { color: 'blue', weight: 5, opacity:0.5,dashArray:'10',bubblingMouseEvents: false }).addTo(map);
-  //現在地表示。httpsでないと使えないから現状は保留
-  //L.control.locate().addTo(map);
-
-  // loading GeoJSON file - Here my html and usa_adm.geojson file resides in same folder
-  //$.getJSON("route-1110.json",function(data){
-  $.getJSON("syoudoushin.json",function(data){
-  // L.geoJson function is used to parse geojson file and load on to map
-  var datalayer = L.geoJson(data ,{
-  onEachFeature: function(feature, featureLayer) {
-  var ppup = L.popup().setContent(feature.properties.name + '<br><a href= "https://www.yamareco.com/modules/yamainfo/guide_detail.php?route_id=1110" target="_blank">yamareko</a>');
-  featureLayer.bindPopup(ppup);
-  }
-  }).addTo(map);
-  });
-
 }
 
 function onMapClick(e) {
   
   if(tileSelectName == "シームレス地質図"){
     getGeoData(e);
-  }else{
-     //地図のclickイベント呼び出される
-     //クリック地点の座標にマーカーを追加、マーカーのclickイベントでonMarkerClick関数を呼び出し
-     var mk = L.marker(e.latlng,{icon: myIcon}).on('click', onMarkerClick).addTo(map);
-     //地図のclickイベントで呼び出される
-     //plineにクリック地点の座標を追加する
-     pline.addLatLng(e.latlng);
-     pline.on('dblclick', onLinedblClick);
-
-     distancia = 0;
-     latlngs = pline.getLatLngs();
-     //標高をゲット
-     var script = document.createElement('script');
-     script.src = 'https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon=' + e.latlng.lng + '&lat=' + e.latlng.lat + '&callback=myfunc';
-     document.getElementsByTagName('head')[0].appendChild(script);
-     var elev;
-     //非同期通信で取ってくるので、elevはこの関数の一番後に実施される
-     window.myfunc = function(results){
-        elev = results.elevation;
-        if (elev) {altinfo = '標高：' + elev + ' m';} else {altinfo = '標高：（GSI サーバーが利用できません）';}
-        mk.on('mouseover', function (e) {this.openPopup();});
-        mk.bindPopup('北緯：' + e.latlng.lat + '<br>' + '東経：' + e.latlng.lng + '<br>' + '区間：' +section.toFixed(1) + 'm' + '<br>' + altinfo);
-        pointlatlng.push(L.latLng( e.latlng.lat,e.latlng.lng ,parseFloat(elev)));
-     };
-     if (latlngs.length >= 2) {
-       for (var i = 0; i < latlngs.length-1; i++) {
-          distancia += latlngs[i].distanceTo(latlngs[i+1]);
-          section = latlngs[i].distanceTo(latlngs[i+1]);
-       }
-     }
-     else{
-      section = 0;
-     }
-
-     linecount++;
   }
 }
 
-function onMarkerClick(e) {
-  //マーカーのclickイベント呼び出される
-  //マーカーをレイヤから削除
-  map.removeLayer(e.target);
-  //クリックされた緯度経度をplineオブジェクトから検索し、削除する
-  latlngs = pline.getLatLngs();
-  for(let i= 0;i<latlngs.length;i++){
-   if((latlngs[i].lat == e.latlng.lat) && (latlngs[i].lng == e.latlng.lng)){
-     latlngs.splice(i,1);
-     pointlatlng.splice(i,1);
-   }
-  }
-  linecount--;
-  pline.setLatLngs(latlngs);
-}
 
-function onLinedblClick(e) {
- console.log("ダブルクリックされた");
- const myModal = new bootstrap.Modal(document.getElementById('myModal'), {
- });
- myModal.show();
- getPostData();
-}
 </script>
 <body>
 <nav class="navbar navbar-light bg-light">
@@ -569,7 +459,7 @@ function onLinedblClick(e) {
       <!-- 補完候補を表示するエリア -->
       <div id="suggest" style="display:none; z-index: 2;" tabindex="-1" ></div>
       </div>
-      <button class="btn btn-outline-secondary" type="button" id="button-addon2">移動</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon2">移動</button>
     </form>
     <a href="//af.moshimo.com/af/c/click?a_id=3651363&p_id=54&pc_id=54&pl_id=616&guid=ON" rel="nofollow" referrerpolicy="no-referrer-when-downgrade"><img src="//image.moshimo.com/af-img/0032/000000000616.gif" width="88" height="31" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=3651363&p_id=54&pc_id=54&pl_id=616" width="1" height="1" style="border:none;">
   </div>
@@ -732,25 +622,4 @@ function onLinedblClick(e) {
     </div>
   </div>
 </div>
-
-  <!-- モーダル・ダイアログ -->
-
-<div class="modal" id="myModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="staticBackdropLabel">ポイント間の距離と標高の変化</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-	<div id="stage"></div>
-      </div>
-      <div class="modal-footer">
-	<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
 </body>
