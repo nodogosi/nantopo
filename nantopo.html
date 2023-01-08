@@ -14,7 +14,6 @@
     <script src="./dist/leaflet.browser.print.min.js"></script>
     <script src="./src/leaflet.browser.print.sizes.js"></script>
     <script src="./othermarker.js"></script>
-    <script src="./lib/getPostData.js"></script>
     <script src="./lib/getGeoData.js"></script>
     <script src="./lib/l.ellipse.js"></script>
 
@@ -49,7 +48,6 @@
         #suggest strong{
           font-weight: bold;
         }
-/* サジェスト風検索窓用 */
 </style>
 <script>
 // wondowのonloadイベントでSuggestを生成
@@ -450,21 +448,28 @@ function onMapClick(e) {
 <body>
 <nav class="navbar navbar-light bg-light">
   <div class="container-fluid">
-    <form class="d-flex">
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation" id="nanform">
+<!--       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation" id="nanform">
       <span class="navbar-toggler-icon"></span>
-      </button>
+      </button> -->
+      <div class="d-flex flex-row justify-content-start">
+         <div class="mx-1"> 
+         <a href="#">
+         <img src="img/setting.png" alt="setting" width="20" height="20"  id="nanform">
+         </a>
+         </div>
       <!-- サジェスト風検索窓 -->
-      <div class="col-xs-2">
-      <input id="text" type="text" class="form-control" placeholder="山名など入力" aria-label="Recipient's username" aria-describedby="button-addon2" size="30">
-      <!-- 補完候補を表示するエリア -->
-      <div id="suggest" style="display:none; z-index: 2;" tabindex="-1" ></div>
+         <div class="input-group input-group-sm"> 
+         <input id="text" type="text" class="form-control form-control-sm" placeholder="山名など入力" aria-label="Recipient's username" aria-describedby="button-addon2" size="30">
+         <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon2">移動</button>
+         </div>
+         <a href="//af.moshimo.com/af/c/click?a_id=3651363&p_id=54&pc_id=54&pl_id=616&guid=ON" rel="nofollow" referrerpolicy="no-referrer-when-downgrade"><img src="//image.moshimo.com/af-img/0032/000000000616.gif" width="88" height="31" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=3651363&p_id=54&pc_id=54&pl_id=616" width="1" height="1" style="border:none;">
+         </a>
       </div>
-      <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon2">移動</button>
-    </form>
-    <a href="//af.moshimo.com/af/c/click?a_id=3651363&p_id=54&pc_id=54&pl_id=616&guid=ON" rel="nofollow" referrerpolicy="no-referrer-when-downgrade"><img src="//image.moshimo.com/af-img/0032/000000000616.gif" width="88" height="31" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=3651363&p_id=54&pc_id=54&pl_id=616" width="1" height="1" style="border:none;">
   </div>
 </nav>
+<!-- 補完候補を表示するエリア -->
+<div id="suggest" style="display:none; z-index: 2;" tabindex="-1" ></div>
+
 <!-- 下のコンテンツ -->
 <div id="mapcontainer" class="container-fluid w-100 content p-3" style="position:absolute;top:50px;left:0;right:0;bottom:0; z-index: 1;">
 </div>
