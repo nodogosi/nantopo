@@ -435,6 +435,7 @@ function init() {
             maxWidth: 200
         }).addTo(e.printMap);
     });
+  map.on('click', onMapClick);
 }
 
 function onMapClick(e) {
