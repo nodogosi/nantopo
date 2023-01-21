@@ -52,7 +52,7 @@
 <script>
 // wondowのonloadイベントでSuggestを生成
 // (listは、list.js内で定義している)
-var start = function(){new Suggest.Local("text", "suggest", yamakensaku, {dispMax: 100, highlight: true});};
+var start = function(){new Suggest.Local("suggesttext", "suggest", yamakensaku, {dispMax: 100, highlight: true});};
 window.addEventListener ?
   window.addEventListener('load', start, false) :
   window.attachEvent('onload', start);
@@ -123,6 +123,7 @@ $(function () {
       }
       ppContent = ppContent + '<a href="https://www.yamakei-online.com/yk_map/?latlon=' +String(othermarker[i].lat) + ',' + String(othermarker[i].lng) + '&zoom=14 "target="_blank">YAMAKEIリンク' + '</a><br>'
                             + '<a href="https://www.google.co.jp/maps/@' + String(othermarker[i].lat) + ',' + String(othermarker[i].lng) + ',15z?hl=ja" target="_blank">GoogleMap' + '</a><br>'
+                            + '<a href="https://supercweather.com/?lat=' + String(othermarker[i].lat) + '&lng=' + String(othermarker[i].lng) + '&model=msm&element=cp&zl=8" target="_blank">SCW' + '</a><br>'
                             + othermarker[i].text;
       var othertary = othermarker[i].othertext.split(',');
       var othertextadd = '<p><div align="left"><ul>'
@@ -373,6 +374,14 @@ $(function(){
  })
 })
 
+$(function(){
+ $('#button-addon3').on('click', function() {
+  $("#suggesttext").val("");
+  y_lat = InitLat;
+  y_lng = InitLng;
+})
+})
+
 var addMarker = new Array();
 var map;
 var myRenderer;
@@ -384,10 +393,12 @@ var distancia;
 var altinfo;
 var section;
 var tileSelectName="地理院地図";
+const InitLat = 35.205327;
+const InitLng = 137.169935;
 
 function init() {
   map = L.map('mapcontainer', { zoomControl: false ,preferCanvas: true});
-  map.setView([35.205327,137.169935], 13);
+  map.setView([InitLat,InitLng], 13);
   var gsiattr = "<a href='http://portal.cyberjapan.jp/help/termsofuse.html' target='_blank'>地理院タイル</a>";
   var tisituattr = "<a href='https://gbank.gsj.jp/seamless/v2/api/1.2/legend.html' target='_blank'>地質凡例</a>";
   var gsi = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: gsiattr });
@@ -459,11 +470,10 @@ function onMapClick(e) {
          </div>
       <!-- サジェスト風検索窓 -->
          <div class="input-group input-group-sm"> 
-         <input id="text" type="text" class="form-control form-control-sm" placeholder="山名など入力" aria-label="Recipient's username" aria-describedby="button-addon2" size="30">
+         <input id="suggesttext" type="text" class="form-control form-control-sm" placeholder="ひらがなで山名など入力" aria-label="Recipient's username" aria-describedby="button-addon2" size="30">
          <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon2">移動</button>
+         <button class="btn btn-outline-secondary btn-sm" type="button" id="button-addon3">クリア</button>
          </div>
-         <a href="//af.moshimo.com/af/c/click?a_id=3768516&p_id=54&pc_id=54&pl_id=616&guid=ON" rel="nofollow" referrerpolicy="no-referrer-when-downgrade"><img src="//image.moshimo.com/af-img/0032/000000000616.gif" width="88" height="31" style="border:none;"></a><img src="//i.moshimo.com/af/i/impression?a_id=3768516&p_id=54&pc_id=54&pl_id=616" width="1" height="1" style="border:none;">      </div>
-         </a>
   </div>
 </nav>
 <!-- 補完候補を表示するエリア -->
