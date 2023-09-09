@@ -90,10 +90,19 @@ var otherID = [
 var addotherID = new Array();
 var otherIDnum;
 var addpp;
+var Lines_shape_pos = [];
+var p_bl;
+var p_br;
+var p_tl;
+var p_tr;
+var zihoku_line = [];
+const zihoku_count = 4;
 const tent_offset = 0.001;
 const rectheight = 0.001;
 const rectwidth = 0.001;
 const huki_offset = 0.001;
+//磁北線の傾き
+const zihoku_deg = 6.5;
 //地図クリック時のアイコン
 var myIcon = L.icon({
     iconUrl: 'img/862_ch_h.png',
@@ -105,7 +114,36 @@ $(function () {
        map.removeLayer(addMarker[i]);
      }
      addMarker = [];
+   //磁北線を引く
 
+   p_bl = L.latLng(map.getBounds().getSouth(), map.getBounds().getWest());
+   p_tr = L.latLng(map.getBounds().getNorth(),map.getBounds().getEast());
+   p_br = L.latLng(map.getBounds().getSouth(),map.getBounds().getEast());
+   p_tl = L.latLng(map.getBounds().getNorth(),map.getBounds().getWest());
+
+   if (zihoku_disp == 1) {
+    //画面の縦の距離を算出
+    let tate_dis = p_tl.distanceTo(p_bl)
+    //縦の距離から磁北線勾配を使って横距離オフセットを算出して、定数で割って経度オフセット算出
+    let add_lngoffset = tate_dis * Math.tan((zihoku_deg * Math.PI) / 180) / lon_m
+    //磁北線と磁北線との間の経度オフセット算出
+    let zihokusen_offset = ((map.getBounds().getEast() - add_lngoffset) - map.getBounds().getWest())/(zihoku_count-1)
+    zihoku_line = [];
+    for ( i = 0; i < zihoku_count; i++ )
+    {
+      zihoku_line.push(L.polyline([] ,
+            { color: "#FF0000",
+              weight: 1,
+            }).addTo(map));
+      zihoku_line[i].addLatLng(L.latLng(p_tl.lat,p_tl.lng+zihokusen_offset*i));
+      zihoku_line[i].addLatLng(L.latLng(p_bl.lat,p_bl.lng+zihokusen_offset*i+add_lngoffset));
+    }
+   }else{
+    for ( i = 0; i < zihoku_count; i++ )
+    {
+      map.removeLayer(zihoku_line[i]);
+    }
+   }
    var sonotaflag = false;
    otherIDnum = 0;
    for (let i=0;i<addotherID.length;i++) {
@@ -378,6 +416,15 @@ $(function(){
  })
 })
 
+$(function(){
+ $('#zihoku').on('change', function() {
+   if ($('#zihoku:checked').val() == "on"){
+    zihoku_disp = 1;
+   }else{
+    zihoku_disp = 0;
+   }
+ })
+})
 $(function(){
  $('#nanform').on('click', function() {
  const nanFormModal = new bootstrap.Modal(document.getElementById('nanFormModal'), {
@@ -726,6 +773,14 @@ function onLinedblClick(e) {
                 </div>
                 </div>
                  -->
+
+                  <div class="float-right">
+                  <div class="form-check form-switch">
+                  <label class="form-check-label" for="flexSwitchCheckDefault">磁北線表示</label>
+                  <input class="form-check-input" type="checkbox" id="zihoku">
+                </div>
+                </div>
+
                 <!--
                 <div class="form-check-inline">
                   <input class="form-check-input" type="checkbox"  name="yamamark"  value="他の宿泊施設">
