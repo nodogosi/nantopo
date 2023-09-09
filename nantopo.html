@@ -18,7 +18,11 @@
     <script src="./lib/getPostData.js"></script>
     <script src="./lib/getGeoData.js"></script>
     <script src="./lib/l.ellipse.js"></script>
-
+    <!-- 現在地移動ボタン -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/L.Control.Locate.min.css" />
+    <script src="L.Control.Locate.min.js"></script>
+    <!-- 現在地移動ボタン -->
     <!--サジェスト風検索窓-->
     <script src="./suggest.js"></script>
 
@@ -413,6 +417,7 @@ var tileSelectName="地理院地図";
 const InitLat = 35.205327;
 const InitLng = 137.169935;
 
+
 function init() {
   map = L.map('mapcontainer', { zoomControl: false ,preferCanvas: true});
   map.setView([InitLat,InitLng], 13);
@@ -465,7 +470,19 @@ function init() {
   //plineをpolylineオブジェクトとし、空の座標を入れて地図に追加
   //bubblingMouseEvents属性をfalseに設定しておき、イベントがmapオブジェクトに連鎖するのを防ぐ
   pline = L.polyline([], { color: 'blue', weight: 5, opacity:0.5,dashArray:'10',bubblingMouseEvents: false }).addTo(map);
-
+  //現在地表示
+  var option = {
+    position: 'topright',
+    strings: {
+        title: "現在地を表示",
+        popup: "いまここ"
+    },
+    locateOptions: {
+      maxZoom: 16
+    }
+  }
+  
+  var lc = L.control.locate(option).addTo(map);
 }
 
 function onMapClick(e) {
@@ -701,12 +718,14 @@ function onLinedblClick(e) {
                   </label>
                 </div>
                 <!-- 右寄せで配置 -->
-                <div class="float-right">
+                <!-- 標高グラフ表示
+                  <div class="float-right">
                   <div class="form-check form-switch">
                   <label class="form-check-label" for="flexSwitchCheckDefault">標高グラフ表示</label>
                   <input class="form-check-input" type="checkbox" id="hyoukou_graph">
                 </div>
                 </div>
+                 -->
                 <!--
                 <div class="form-check-inline">
                   <input class="form-check-input" type="checkbox"  name="yamamark"  value="他の宿泊施設">
