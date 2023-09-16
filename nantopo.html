@@ -96,6 +96,8 @@ var p_br;
 var p_tl;
 var p_tr;
 var zihoku_line = [];
+var zihoku_disp = 0;
+var zihoku_disp_erase = 0;
 const zihoku_count = 4;
 const tent_offset = 0.001;
 const rectheight = 0.001;
@@ -121,28 +123,37 @@ $(function () {
    p_br = L.latLng(map.getBounds().getSouth(),map.getBounds().getEast());
    p_tl = L.latLng(map.getBounds().getNorth(),map.getBounds().getWest());
 
-   if (zihoku_disp == 1) {
-    //画面の縦の距離を算出
-    let tate_dis = p_tl.distanceTo(p_bl)
-    //縦の距離から磁北線勾配を使って横距離オフセットを算出して、定数で割って経度オフセット算出
-    let add_lngoffset = tate_dis * Math.tan((zihoku_deg * Math.PI) / 180) / lon_m
-    //磁北線と磁北線との間の経度オフセット算出
-    let zihokusen_offset = ((map.getBounds().getEast() - add_lngoffset) - map.getBounds().getWest())/(zihoku_count-1)
-    zihoku_line = [];
-    for ( i = 0; i < zihoku_count; i++ )
-    {
-      zihoku_line.push(L.polyline([] ,
-            { color: "#FF0000",
-              weight: 1,
-            }).addTo(map));
-      zihoku_line[i].addLatLng(L.latLng(p_tl.lat,p_tl.lng+zihokusen_offset*i));
-      zihoku_line[i].addLatLng(L.latLng(p_bl.lat,p_bl.lng+zihokusen_offset*i+add_lngoffset));
+   if (zihoku_disp == 1){
+    //磁北線削除済みフラグが立っていれば、描画する。
+    if (zihoku_disp_erase == 1) {
+      //画面の縦の距離を算出
+      let tate_dis = p_tl.distanceTo(p_bl)
+      //縦の距離から磁北線勾配を使って横距離オフセットを算出して、定数で割って経度オフセット算出
+      let add_lngoffset = tate_dis * Math.tan((zihoku_deg * Math.PI) / 180) / lon_m
+      //磁北線と磁北線との間の経度オフセット算出
+      let zihokusen_offset = ((map.getBounds().getEast() - add_lngoffset) - map.getBounds().getWest())/(zihoku_count-1)
+      zihoku_line = [];
+      for ( i = 0; i < zihoku_count; i++ )  
+      {
+        zihoku_line.push(L.polyline([] ,
+              { color: "#FF0000",
+                weight: 1,
+              }).addTo(map));
+        zihoku_line[i].addLatLng(L.latLng(p_tl.lat,p_tl.lng+zihokusen_offset*i));
+        zihoku_line[i].addLatLng(L.latLng(p_bl.lat,p_bl.lng+zihokusen_offset*i+add_lngoffset));
+      }
+      //磁北線削除済みフラグを落として、次回磁北線描画フラグが立っていても再描画しないようにする。
+      zihoku_disp_erase = 0;
     }
    }else{
-    for ( i = 0; i < zihoku_count; i++ )
-    {
-      map.removeLayer(zihoku_line[i]);
+    if (zihoku_line.length > 0) {
+      for ( i = 0; i < zihoku_count; i++ )
+      {
+        map.removeLayer(zihoku_line[i]);
+      }      
     }
+    //磁北線削除済みフラグを立てて、再描画可能状態にする。
+    zihoku_disp_erase = 1;
    }
    var sonotaflag = false;
    otherIDnum = 0;
