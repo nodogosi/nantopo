@@ -11,8 +11,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.0/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.3.0/dist/leaflet.js"></script>
-    <script src="./dist/leaflet.browser.print.min.js"></script>
-    <script src="./src/leaflet.browser.print.sizes.js"></script>
+    <!-- <script src="./dist/leaflet.browser.print.min.js"></script> -->
+    <script src="./dist/bundle.js"></script>
+<!--     <script src="./src/leaflet.browser.print.sizes.js"></script> -->
     <script src="./othermarker.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="./lib/getPostData.js"></script>
@@ -508,22 +509,31 @@ function init() {
   });
 
   L.control.scale({ maxWidth: 200, position: 'topleft', imperial: false }).addTo(map);
-  L.control.browserPrint(
+/*   L.control.browserPrint(
     {
     	printModes: [
 		L.control.browserPrint.mode.portrait(),
 		L.control.browserPrint.mode.landscape()
 	],
 	manualMode: false
-    }).addTo(map);
+    }).addTo(map); */
+//EasyPrintおためし hide～によってスケールが表示されるが、その他余計なものもみえてしまう
+  L.easyPrint({
+  	title: 'My awesome print button',
+	  position: 'topleft',
+    exportOnly: true,
+    hideControlContainer:false, 
+    hideClasses: ['leaflet-control-zoom'],
+	  sizeModes: ['Current','A4Portrait', 'A4Landscape']
+  }).addTo(map);
 //印刷にスケール出すための対応(https://stackoverflow.com/questions/47653070/leaflet-browser-print-plugin-doesnt-show-scale-on-print)
-    map.on("browser-print-start", function(e){
+/*     map.on("browser-print-start", function(e){
         L.control.scale({
             position: 'topleft',
             imperial: false,
             maxWidth: 200
         }).addTo(e.printMap);
-    });
+    }); */
   map.on('click', onMapClick);
   //plineをpolylineオブジェクトとし、空の座標を入れて地図に追加
   //bubblingMouseEvents属性をfalseに設定しておき、イベントがmapオブジェクトに連鎖するのを防ぐ
