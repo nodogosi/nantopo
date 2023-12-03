@@ -104,8 +104,7 @@ const tent_offset = 0.001;
 const rectheight = 0.001;
 const rectwidth = 0.001;
 const huki_offset = 0.001;
-//磁北線の傾き
-const zihoku_deg = 6.5;
+
 //地図クリック時のアイコン
 var myIcon = L.icon({
     iconUrl: 'img/862_ch_h.png',
@@ -130,6 +129,17 @@ $(function () {
       //画面の縦の距離を算出
       let tate_dis = p_tl.distanceTo(p_bl)
       //縦の距離から磁北線勾配を使って横距離オフセットを算出して、定数で割って経度オフセット算出
+      //偏角算出式：https://vldb.gsi.go.jp/sokuchi/geomag/menu_04/index.html
+      let delta_lng = ( p_br.lng + p_bl.lng) / 2 - 138
+      let delta_lat = ( p_tr.lat + p_br.lat)  / 2 - 37
+      //磁北線の傾き
+      //let zihoku_deg = 6.5;
+      //係数は角度になおしている
+      let zihoku_deg = 8.2637	+	0.3077 * delta_lat	-	0.128766667 * delta_lng
+      +	0.000116667* delta_lat*delta_lat	
+      -	0.000116667* delta_lat*delta_lng
+      -	0.010916667*delta_lng*delta_lng;
+      console.log(zihoku_deg);
       let add_lngoffset = tate_dis * Math.tan((zihoku_deg * Math.PI) / 180) / lon_m
       //磁北線と磁北線との間の経度オフセット算出
       let zihokusen_offset = ((map.getBounds().getEast() - add_lngoffset) - map.getBounds().getWest())/(zihoku_count-1)
@@ -800,6 +810,11 @@ function onLinedblClick(e) {
                   <label class="form-check-label" for="flexSwitchCheckDefault">磁北線表示</label>
                   <input class="form-check-input" type="checkbox" id="zihoku">
                 </div>
+                <div class="form-check form-switch">
+                  <label class="form-check-label" for="flexSwitchCheckDefault">標高グラフ表示</label>
+                  <input class="form-check-input" type="checkbox" id="hyoukou_graph">
+                </div>
+  
                 </div>
 
                 <!--
